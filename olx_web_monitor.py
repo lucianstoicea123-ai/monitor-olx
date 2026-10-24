@@ -27,9 +27,25 @@ def scan_olx(
         browser = playwright.chromium.launch(headless=True)
         try:
             page = browser.new_page()
-            page.goto(search_url, wait_until="domcontentloaded", timeout=60000)
+            response = page.goto(
+                search_url,
+                wait_until="domcontentloaded",
+                timeout=60000,
+            )
+            http_status = response.status if response is not None else "necunoscut"
+            log(f"Răspuns OLX: HTTP {http_status}; pagina: {page.title()!r}")
             cards = page.locator('[data-cy="l-card"]')
-            cards.first.wait_for(timeout=15000)
+            try:
+                cards.first.wait_for(state="attached", timeout=15000)
+            except PlaywrightError as exc:
+                page_title = page.title()
+                body_text = " ".join(page.locator("body").inner_text().split())
+                page_excerpt = body_text[:500] or "(pagina nu conține text vizibil)"
+                raise RuntimeError(
+                    "OLX nu a afișat carduri de anunțuri. "
+                    f"HTTP {http_status}; pagina: {page_title!r}; "
+                    f"adresă: {page.url}; conținut: {page_excerpt}"
+                ) from exc
             log(f"Anunțuri găsite pe OLX: {cards.count()}")
 
             for card in cards.all():
