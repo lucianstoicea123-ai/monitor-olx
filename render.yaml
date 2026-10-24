@@ -3,6 +3,6 @@ services:
     name: monitor-olx
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements-web.txt && playwright install --with-deps chromium
+    buildCommand: pip install -r requirements-web.txt && playwright install chromium
     startCommand: uvicorn web_app:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /
